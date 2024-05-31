@@ -1,7 +1,7 @@
 #pragma once
 
 #include "esphome/core/component.h"
-#include "esphome/components/binary_sensor/binary_sensor.h"
+//#include "esphome/components/binary_sensor/binary_sensor.h"
 #include "esphome/components/button/button.h"
 #include "esphome/components/output/binary_output.h"
 #include "esphome/components/output/float_output.h"

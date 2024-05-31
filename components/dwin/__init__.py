@@ -20,7 +20,7 @@ CONF_THE_TEXT = "the_text"
 CONF_THE_SENSOR = "the_sensor"
 CONF_THE_BIN_OUTPUT = "the_bin_output"
 CONF_THE_FLT_OUTPUT = "the_flt_output"
-CONF_THE_BINSENSOR = "the_binsensor"
+#CONF_THE_BINSENSOR = "the_binsensor"
 CONF_THE_SWITCH = "the_switch"
 CONF_THE_BUTTON = "the_button"
 
@@ -35,7 +35,7 @@ CONFIG_SCHEMA = cv.Schema({
     ),
     cv.Optional(CONF_THE_BIN_OUTPUT): output.BINARY_OUTPUT_SCHEMA.extend({cv.GenerateID(): cv.declare_id(DWINBOutput)}),
     cv.Optional(CONF_THE_FLT_OUTPUT): output.FLOAT_OUTPUT_SCHEMA.extend({cv.GenerateID(): cv.declare_id(DWINFOutput)}),
-    cv.Optional(CONF_THE_BINSENSOR): binary_sensor.binary_sensor_schema(),
+    #cv.Optional(CONF_THE_BINSENSOR): binary_sensor.binary_sensor_schema(),
     cv.Optional(CONF_THE_SWITCH): switch.SWITCH_SCHEMA.extend({cv.GenerateID(): cv.declare_id(DWINSwitch)}),
     cv.Optional(CONF_THE_BUTTON): button.BUTTON_SCHEMA.extend({cv.GenerateID(): cv.declare_id(DWINButton)}),
 }).extend(uart.UART_DEVICE_SCHEMA)
@@ -66,9 +66,9 @@ async def to_code(config):
         await output.register_output(out, conf)
         cg.add(out.set_parent(var))
 
-    if CONF_THE_BINSENSOR in config:
-        sens = await binary_sensor.new_binary_sensor(config[CONF_THE_BINSENSOR])
-        cg.add(var.set_the_binsensor(sens))
+    #if CONF_THE_BINSENSOR in config:
+    #    sens = await binary_sensor.new_binary_sensor(config[CONF_THE_BINSENSOR])
+    #    cg.add(var.set_the_binsensor(sens))
 
     if CONF_THE_SWITCH in config:
         sw = await switch.new_switch(config[CONF_THE_SWITCH])
