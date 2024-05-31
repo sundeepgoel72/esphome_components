@@ -13,7 +13,7 @@
 namespace esphome {
 namespace dwin {
 
-class UARTDemo : public Component,  public uart::UARTDevice {
+class DWIN : public Component,  public uart::UARTDevice {
  public:
   float get_setup_priority() const override { return setup_priority::LATE; }
   void setup() override;
@@ -36,40 +36,40 @@ class UARTDemo : public Component,  public uart::UARTDevice {
   std::vector<uint8_t> rx_message_;
 };
 
-class UARTDemoBOutput : public Component, public output::BinaryOutput {
+class DWINBOutput : public Component, public output::BinaryOutput {
  public:
   void dump_config() override;
-  void set_parent(UARTDemo *parent) { this->parent_ = parent; }
+  void set_parent(DWIN *parent) { this->parent_ = parent; }
  protected:
   void write_state(bool state) override;
-  UARTDemo *parent_;
+  DWIN *parent_;
 };
 
-class UARTDemoFOutput : public Component, public output::FloatOutput {
+class DWINFOutput : public Component, public output::FloatOutput {
  public:
   void dump_config() override;
-  void set_parent(UARTDemo *parent) { this->parent_ = parent; }
+  void set_parent(DWIN *parent) { this->parent_ = parent; }
  protected:
   void write_state(float state) override;
-  UARTDemo *parent_;
+  DWIN *parent_;
 };
 
-class UARTDemoSwitch : public Component, public switch_::Switch {
+class DWINSwitch : public Component, public switch_::Switch {
  public:
   void dump_config() override;
-  void set_parent(UARTDemo *parent) { this->parent_ = parent; }
+  void set_parent(DWIN *parent) { this->parent_ = parent; }
  protected:
   void write_state(bool state) override;
-  UARTDemo *parent_;
+  DWIN *parent_;
 };
 
-class UARTDemoButton : public Component, public button::Button {
+class DWINButton : public Component, public button::Button {
  public:
   void dump_config() override;
-  void set_parent(UARTDemo *parent) { this->parent_ = parent; }
+  void set_parent(DWIN *parent) { this->parent_ = parent; }
  protected:
   void press_action() override;
-  UARTDemo *parent_;
+  DWIN *parent_;
 };
 
 }  // namespace dwin

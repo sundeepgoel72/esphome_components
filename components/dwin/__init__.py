@@ -10,11 +10,11 @@ AUTO_LOAD = ['binary_sensor', 'button', 'output', 'sensor', 'switch', 'text_sens
 
 dwin_ns = cg.esphome_ns.namespace('dwin')
 
-UARTDemo = dwin_ns.class_('UARTDemo', cg.Component, uart.UARTDevice)
-UARTDemoBOutput = dwin_ns.class_("UARTDemoBOutput", output.BinaryOutput)
-UARTDemoFOutput = dwin_ns.class_("UARTDemoFOutput", output.FloatOutput)
-UARTDemoSwitch = dwin_ns.class_("UARTDemoSwitch", switch.Switch, cg.Component)
-UARTDemoButton = dwin_ns.class_("UARTDemoButton", button.Button, cg.Component)
+DWIN = dwin_ns.class_('DWIN', cg.Component, uart.UARTDevice)
+DWINBOutput = dwin_ns.class_("DWINBOutput", output.BinaryOutput)
+DWINFOutput = dwin_ns.class_("DWINFOutput", output.FloatOutput)
+DWINSwitch = dwin_ns.class_("DWINSwitch", switch.Switch, cg.Component)
+DWINButton = dwin_ns.class_("DWINButton", button.Button, cg.Component)
 
 CONF_THE_TEXT = "the_text"
 CONF_THE_SENSOR = "the_sensor"
@@ -25,7 +25,7 @@ CONF_THE_SWITCH = "the_switch"
 CONF_THE_BUTTON = "the_button"
 
 CONFIG_SCHEMA = cv.Schema({
-    cv.GenerateID(): cv.declare_id(UARTDemo),
+    cv.GenerateID(): cv.declare_id(DWIN),
     cv.Optional(CONF_THE_TEXT): text_sensor.text_sensor_schema(text_sensor.TextSensor),
     cv.Optional(CONF_THE_SENSOR): sensor.sensor_schema(
         unit_of_measurement=UNIT_VOLT,
@@ -33,11 +33,11 @@ CONFIG_SCHEMA = cv.Schema({
         accuracy_decimals=1,
         device_class=DEVICE_CLASS_VOLTAGE
     ),
-    cv.Optional(CONF_THE_BIN_OUTPUT): output.BINARY_OUTPUT_SCHEMA.extend({cv.GenerateID(): cv.declare_id(UARTDemoBOutput)}),
-    cv.Optional(CONF_THE_FLT_OUTPUT): output.FLOAT_OUTPUT_SCHEMA.extend({cv.GenerateID(): cv.declare_id(UARTDemoFOutput)}),
+    cv.Optional(CONF_THE_BIN_OUTPUT): output.BINARY_OUTPUT_SCHEMA.extend({cv.GenerateID(): cv.declare_id(DWINBOutput)}),
+    cv.Optional(CONF_THE_FLT_OUTPUT): output.FLOAT_OUTPUT_SCHEMA.extend({cv.GenerateID(): cv.declare_id(DWINFOutput)}),
     cv.Optional(CONF_THE_BINSENSOR): binary_sensor.binary_sensor_schema(),
-    cv.Optional(CONF_THE_SWITCH): switch.SWITCH_SCHEMA.extend({cv.GenerateID(): cv.declare_id(UARTDemoSwitch)}),
-    cv.Optional(CONF_THE_BUTTON): button.BUTTON_SCHEMA.extend({cv.GenerateID(): cv.declare_id(UARTDemoButton)}),
+    cv.Optional(CONF_THE_SWITCH): switch.SWITCH_SCHEMA.extend({cv.GenerateID(): cv.declare_id(DWINSwitch)}),
+    cv.Optional(CONF_THE_BUTTON): button.BUTTON_SCHEMA.extend({cv.GenerateID(): cv.declare_id(DWINButton)}),
 }).extend(uart.UART_DEVICE_SCHEMA)
 
 

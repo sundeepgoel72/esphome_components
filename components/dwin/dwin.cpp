@@ -6,10 +6,10 @@ namespace dwin {
 
 static const char *TAG = "dwin";
 
-void UARTDemo::setup() {
+void DWIN::setup() {
 }
 
-void UARTDemo::loop() {
+void DWIN::loop() {
   while (this->available()) {
     uint8_t c;
     this->read_byte(&c);
@@ -17,7 +17,7 @@ void UARTDemo::loop() {
   }
 }
 
-void UARTDemo::handle_char_(uint8_t c) {
+void DWIN::handle_char_(uint8_t c) {
   if (c == '\r')
     return;
   if (c == '\n') {
@@ -34,53 +34,53 @@ void UARTDemo::handle_char_(uint8_t c) {
   this->rx_message_.push_back(c);
 }
 
-void UARTDemo::dump_config() {
+void DWIN::dump_config() {
   LOG_TEXT_SENSOR("", "The Text Sensor", this->the_text_);
   LOG_SENSOR("", "The Sensor", this->the_sensor_);
 }
 
-void UARTDemo::write_binary(bool state) {
+void DWIN::write_binary(bool state) {
   this->write_str(ONOFF(state));
 }
 
-void UARTDemo::ping() {
+void DWIN::ping() {
   this->write_str("PING");
 }
 
-void UARTDemo::write_float(float state) {
+void DWIN::write_float(float state) {
   this->write_str(to_string(state).c_str());
 }
 
-void UARTDemoBOutput::dump_config() {
+void DWINBOutput::dump_config() {
   LOG_BINARY_OUTPUT(this);
 }
 
-void UARTDemoBOutput::write_state(bool state) {
+void DWINBOutput::write_state(bool state) {
   this->parent_->write_binary(state);
 }
 
-void UARTDemoFOutput::dump_config() {
+void DWINFOutput::dump_config() {
   LOG_FLOAT_OUTPUT(this);
 }
 
-void UARTDemoFOutput::write_state(float state) {
+void DWINFOutput::write_state(float state) {
   this->parent_->write_float(state);
 }
 
-void UARTDemoSwitch::dump_config() {
+void DWINSwitch::dump_config() {
   LOG_SWITCH("", "UART Demo Switch", this);
 }
 
-void UARTDemoSwitch::write_state(bool state) {
+void DWINSwitch::write_state(bool state) {
   this->parent_->write_binary(state);
   this->publish_state(state);
 }
 
-void UARTDemoButton::dump_config() {
+void DWINButton::dump_config() {
   LOG_BUTTON("", "UART Demo Button", this);
 }
 
-void UARTDemoButton::press_action() {
+void DWINButton::press_action() {
   this->parent_->ping();
 }
 
