@@ -1,8 +1,8 @@
 #pragma once
 
 #include "esphome/core/component.h"
-//#include "esphome/components/binary_sensor/binary_sensor.h"
-#include "esphome/components/button/button.h"
+#include "esphome/components/binary_sensor/binary_sensor.h"
+//#include "esphome/components/button/button.h"
 #include "esphome/components/output/binary_output.h"
 #include "esphome/components/output/float_output.h"
 #include "esphome/components/sensor/sensor.h"
@@ -15,61 +15,70 @@ namespace dwin {
 
 class DWIN : public Component,  public uart::UARTDevice {
  public:
+ 
   float get_setup_priority() const override { return setup_priority::LATE; }
   void setup() override;
   void loop() override;
-  void dump_config() override;
+  //void dump_config() override;
 
-  void set_the_text(text_sensor::TextSensor *text_sensor) { the_text_ = text_sensor; }
-  void set_the_sensor(sensor::Sensor *sensor) { the_sensor_ = sensor; }
-  void set_the_binsensor(binary_sensor::BinarySensor *sensor) { the_binsensor_ = sensor; }
+  //From Arduino DWIN_DGUS_HMI library --------------------------------------------------------
+ 		
+  void echoEnabled(bool enabled);
+  // Listen Touch Events & Messeges from HMI
+  void listen();
+  // Get Version
+  double getHWVersion();
+  // restart HMI
+  void restartHMI();
+  // set Perticulat Page
+  void setPage(byte pageID);
+  // get Current Page ID
+  byte getPage();
+  // set LCD Brightness
+  void setBrightness(byte pConstrast);
+  // set LCD Brightness
+  byte getBrightness();
+  // set Data on VP Address
+  void setText(long address, String textData);
+  // set Byte on VP Address
+  void setVP(long address, byte data);
+  // beep Buzzer for 1 sec
+  void beepHMI();
+  // Callback Function
+  typedef void (*hmiListner) (String address, int lastByte, String messege, String response);
 
-  void write_binary(bool value);
-  void write_float(float value);
-  void ping();
+  // CallBack Method
+  void hmiCallBack(hmiListner callBackFunction);
+  //End From Arduino DWIN_DGUS_HMI library --------------------------------------------------------
+
  protected:
-  text_sensor::TextSensor *the_text_{nullptr};
-  sensor::Sensor *the_sensor_{nullptr};
-  binary_sensor::BinarySensor *the_binsensor_{nullptr};
+	
 
-  void handle_char_(uint8_t c);
-  std::vector<uint8_t> rx_message_;
-};
+ private:
 
-class DWINBOutput : public Component, public output::BinaryOutput {
- public:
-  void dump_config() override;
-  void set_parent(DWIN *parent) { this->parent_ = parent; }
- protected:
-  void write_state(bool state) override;
-  DWIN *parent_;
-};
+    //From Arduino DWIN_DGUS_HMI library --------------------------------------------------------
+    #ifndef ESP32
+    SoftwareSerial* localSWserial = nullptr; 
+    #endif
 
-class DWINFOutput : public Component, public output::FloatOutput {
- public:
-  void dump_config() override;
-  void set_parent(DWIN *parent) { this->parent_ = parent; }
- protected:
-  void write_state(float state) override;
-  DWIN *parent_;
-};
+    Stream* _dwinSerial;   // DWIN Serial interface
+    bool _isSoft;          // Is serial interface software
+    long _baud;              // DWIN HMI Baud rate
+    bool _echo;            // Response Command Show
+    bool _isConnected;     // Flag set on successful communication
 
-class DWINSwitch : public Component, public switch_::Switch {
- public:
-  void dump_config() override;
-  void set_parent(DWIN *parent) { this->parent_ = parent; }
- protected:
-  void write_state(bool state) override;
-  DWIN *parent_;
-};
+    bool cbfunc_valid;
+    hmiListner listnerCallback;
 
-class DWINButton : public Component, public button::Button {
- public:
-  void dump_config() override;
-  void set_parent(DWIN *parent) { this->parent_ = parent; }
- protected:
-  void press_action() override;
-  DWIN *parent_;
+    void init(Stream* port, bool isSoft); 
+    byte readCMDLastByte();
+    String readDWIN();
+    String handle();
+    String checkHex(byte currentNo);
+    void flushSerial();
+
+    //End From Arduino DWIN_DGUS_HMI library --------------------------------------------------------
+
 };
 
 }  // namespace dwin
