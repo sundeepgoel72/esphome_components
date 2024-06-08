@@ -1,242 +1,182 @@
 #include "dwin.h"
 #include "esphome/core/log.h"
-#include <stdio.h>
 
-namespace esphome {
-namespace dwin {
+namespace esphome
+{
+    namespace dwin
+    {
 
-static const char *TAG = "dwin";
+        static const char *TAG = "Dwin";
 
-#define CMD_HEAD1           0x5A
-#define CMD_HEAD2           0xA5
-#define CMD_WRITE           0x82
-#define CMD_READ            0x83
+        static const uint8_t CMD_HEAD1 = 0x5A;
+        static const uint8_t CMD_HEAD2 = 0xA5;
+        static const uint8_t CMD_WRITE = 0x82;
+        static const uint8_t CMD_READ = 0x83;
 
-#define MIN_ASCII           32
-#define MAX_ASCII           255
+        static const uint8_t MIN_ASCII = 3;
+        static const uint8_t MAX_ASCII = 255;
 
-#define CMD_READ_TIMEOUT    50
-#define READ_TIMEOUT        100
+        static const uint8_t CMD_READ_TIMEOUT = 50;
+        static const uint8_t READ_TIMEOUT = 100;
 
-void DWIN::setup() {
-}
-
-void DWIN::loop() {
-  //while (this->available()) {
-  //  uint8_t c;
-  //  this->read_byte(&c);
-  //  this->handle_char_(c);
-  //}
-}
-
-void DWIN::init(Stream* port, bool isSoft){
-    this->_dwinSerial = port;
-    this->_isSoft = isSoft;
-}
-
-void DWIN::echoEnabled(bool echoEnabled){
-    _echo = echoEnabled;
-}
-
-// Get Hardware Firmware Version of DWIN HMI
-double DWIN::getHWVersion(){  //  HEX(5A A5 04 83 00 0F 01)
-    byte sendBuffer[] = {CMD_HEAD1, CMD_HEAD2, 0x04, CMD_READ, 0x00, 0x0F, 0x01};
-    _dwinSerial->write(sendBuffer, sizeof(sendBuffer)); 
-    delay(10);
-    return readCMDLastByte();
-}
-
-// Restart DWIN HMI
-void DWIN::restartHMI(){  // HEX(5A A5 07 82 00 04 55 aa 5a a5 )
-    byte sendBuffer[] = {CMD_HEAD1, CMD_HEAD2, 0x07, CMD_WRITE, 0x00, 0x04, 0x55, 0xaa, CMD_HEAD1, CMD_HEAD2};
-    _dwinSerial->write(sendBuffer, sizeof(sendBuffer)); 
-    delay(10);
-    readDWIN();
-}
-
-// SET DWIN Brightness
-void DWIN::setBrightness(byte brigtness){
-    byte sendBuffer[] = {CMD_HEAD1, CMD_HEAD2, 0x04, CMD_WRITE, 0x00, 0x82, brigtness };
-    _dwinSerial->write(sendBuffer, sizeof(sendBuffer));
-    readDWIN();
-}
-
-// SET DWIN Brightness
-byte DWIN::getBrightness(){
-    byte sendBuffer[] = {CMD_HEAD1, CMD_HEAD2, 0x04, CMD_READ, 0x00, 0x31, 0x01 };
-    _dwinSerial->write(sendBuffer, sizeof(sendBuffer));
-    return readCMDLastByte();
-}
-
-// Chnage Page 
-void DWIN::setPage(byte page){
-    //5A A5 07 82 00 84 5a 01 00 02
-    byte sendBuffer[] = {CMD_HEAD1, CMD_HEAD2, 0x07, CMD_WRITE, 0x00, 0x84, 0x5A, 0x01, 0x00, page};
-    _dwinSerial->write(sendBuffer, sizeof(sendBuffer));
-    readDWIN();
-}
-
-// Get Current Page ID
-byte DWIN::getPage(){
-    byte sendBuffer[] = {CMD_HEAD1, CMD_HEAD2, 0x04, CMD_READ, 0x00 , 0x14, 0x01};
-    _dwinSerial->write(sendBuffer, sizeof(sendBuffer)); 
-    return readCMDLastByte();
-}
-
-// Set Text on VP Address
-void DWIN::setText(long address, String textData){
-
-    int dataLen = textData.length();
-    byte startCMD[] = {CMD_HEAD1, CMD_HEAD2, dataLen+3 , CMD_WRITE, 
-    (address >> 8) & 0xFF, (address) & 0xFF};
-    byte dataCMD[dataLen];textData.getBytes(dataCMD, dataLen+1);
-    byte sendBuffer[6+dataLen];
-
-    memcpy(sendBuffer, startCMD, sizeof(startCMD));
-    memcpy(sendBuffer+6, dataCMD, sizeof(dataCMD));
-
-    _dwinSerial->write(sendBuffer, sizeof(sendBuffer));
-    readDWIN();
-}
-
-// Set Data on VP Address
-void DWIN::setVP(long address, byte data){
-    // 0x5A, 0xA5, 0x05, 0x82, 0x40, 0x20, 0x00, state
-    byte sendBuffer[] = {CMD_HEAD1, CMD_HEAD2, 0x05 , CMD_WRITE, (address >> 8) & 0xFF, (address) & 0xFF, 0x00, data};
-    _dwinSerial->write(sendBuffer, sizeof(sendBuffer));
-    readDWIN();
-}
-
-// beep Buzzer for 1 Sec
-void DWIN::beepHMI(){
-    // 0x5A, 0xA5, 0x05, 0x82, 0x00, 0xA0, 0x00, 0x7D
-    byte sendBuffer[] = {CMD_HEAD1, CMD_HEAD2, 0x05 , CMD_WRITE, 0x00, 0xA0, 0x00, 0x7D};
-    _dwinSerial->write(sendBuffer, sizeof(sendBuffer));
-    readDWIN();
-}
-
-
-// SET CallBack Event
-void DWIN::hmiCallBack(hmiListner callBack){
-    listnerCallback = callBack;
-}
-
-// Listen For incoming callback  event from HMI
-void DWIN::listen(){
-     handle();
-}
-
-String DWIN::readDWIN(){
-      //* This has to only be enabled for Software serial
-    #if defined(DWIN_SOFTSERIAL)
-        if(_isSoft){
-            ((SoftwareSerial *)_dwinSerial)->listen(); // Start software serial listen
-        }  
-    #endif
-
-    String resp;
-    unsigned long startTime = millis(); // Start time for Timeout
-
-    while((millis() - startTime < READ_TIMEOUT)){
-        if(_dwinSerial->available() > 0){
-            int c = _dwinSerial->read();
-            resp.concat(" "+String(c, HEX));
+        void Dwin::setup()
+        {
         }
-    }
-    if (_echo){
-        Serial.println("->> "+resp);
-    }
-    return resp;
-}
 
-String DWIN::checkHex(byte currentNo){
-    if (currentNo < 10){
-        return "0"+String(currentNo, HEX);
-    }
-    return String(currentNo, HEX);
-}
-
-String DWIN::handle(){
-
-    int lastByte;
-    String response;
-    String address;
-    String messege;
-    bool isSubstr = false;
-    bool messegeEnd = true;
-    bool isFirstByte = false;
-    unsigned long startTime = millis(); 
-  
-    while((millis() - startTime < READ_TIMEOUT)){
-        while(_dwinSerial->available() > 0){
-            delay(10);
-            int inhex = _dwinSerial->read();
-            if (inhex == 90 || inhex == 165){
-                isFirstByte = true;
-                response.concat(checkHex(inhex)+" ");
-                continue;
-            }
-            for(int i = 1 ; i <= inhex ;i++){
-                int inByte = _dwinSerial->read();
-                response.concat(checkHex(inByte)+" ");
-                if (i <= 3){
-                    if((i == 2) || (i == 3)){
-                        address.concat(checkHex(inByte));
-                    }
-                    continue;
-                }
-                else{
-                    if(messegeEnd){
-                        if (isSubstr && inByte != MAX_ASCII && inByte > MIN_ASCII){
-                            messege += char(inByte);
-                        }
-                        else{
-                            if(inByte == MAX_ASCII){
-                                messegeEnd = false;
-                            }
-                            isSubstr = true;
-                        }
-                    }
-                }
-                lastByte = inByte;
+        void Dwin::loop()
+        {
+            // this->readDWIN();
+            while (this->available())
+            {
+                uint8_t c;
+                this->read_byte(&c);
+                this->handle_char_(c);
             }
         }
-    }
 
-    if (isFirstByte &&_echo){
-        Serial.println("Address : " + address + " | Data : " + String(lastByte, HEX) + " | Messge : " + messege + " | Response " +response );
-    }
-    if (isFirstByte){
-        listnerCallback(address, lastByte, messege, response);
-    }
-    return response;
-}
+        void Dwin::handle_char_(uint8_t c)
+        {
+            if (c == '\r')
+                return;
+            if (c == '\n')
+            {
+                std::string s(this->rx_message_.begin(), this->rx_message_.end());
 
-
-
-byte DWIN::readCMDLastByte(){
-      //* This has to only be enabled for Software serial
-    #if defined(DWIN_SOFTSERIAL)
-        if(_isSoft){
-            ((SoftwareSerial *)_dwinSerial)->listen(); // Start software serial listen
-        }  
-    #endif
-
-    byte lastByte = -1;
-    unsigned long startTime = millis(); // Start time for Timeout
-    while((millis() - startTime < CMD_READ_TIMEOUT)){
-        while(_dwinSerial->available() > 0){
-            lastByte = _dwinSerial->read();
+                //if (this->the_text_ != nullptr)
+                //    this->the_text_->publish_state(s);
+                //if (this->the_sensor_ != nullptr)
+                //    this->the_sensor_->publish_state(parse_number<float>(s).value_or(0));
+                //if (this->the_binsensor_ != nullptr)
+                //    this->the_binsensor_->publish_state(s == "ON");
+                
+                this->rx_message_.clear();
+                return;
+            }
+            this->rx_message_.push_back(c);
         }
-    }
-    return lastByte;
-}
 
+        void Dwin::readDWIN()
+        {
+            const uint32_t now = millis();
+            if ((now - this->last_transmission_ >= 500) && this->data_index_)
+            {
+                // last transmission too long ago. Reset RX index.
+                ESP_LOGV(TAG, "Last transmission too long ago. Reset RX index.");
+                this->data_index_ = 0;
+            }
 
-void DWIN::flushSerial(){
-  Serial.flush();
-  _dwinSerial->flush();
-}
+            if (this->available() == 0)
+            {
+                return;
+            }
 
-}  // namespace dwin
-}  // namespace esphome
+            this->last_transmission_ = now;
+            while (this->available() != 0)
+            {
+                this->read_byte(&this->data_[this->data_index_]);
+                // auto check = this->check_byte_();
+                // if (!check.has_value())
+                if (true)
+                {
+                    // finished
+                    this->parse_data_();
+                    this->data_index_ = 0;
+                }
+                // else if (!*check)
+                //{
+                //    // wrong data
+                //     ESP_LOGV(TAG, "Byte %i of received data frame is invalid.", this->data_index_);
+                //     this->data_index_ = 0;
+                // }
+                else
+                {
+                    // next byte
+                    this->data_index_++;
+                }
+            }
+        }
+
+        void Dwin::write_vp_command_()
+        {
+            uint8_t command_data[8] = {0};
+            command_data[0] = 0x5a;
+            command_data[1] = 0xa5;
+            command_data[2] = 0x05;
+            command_data[3] = 0x82;
+            command_data[4] = 0x10;
+            command_data[5] = 0x02;
+            command_data[6] = 0x00;
+            command_data[7] = 0x11;
+            ESP_LOGV(TAG, "Writing to UART %d", command_data);
+            this->write_array(command_data, 8);
+        }
+
+        void Dwin::write_vp_command_(uint8_t vp, uint8_t value)
+        {
+            uint8_t command_data[8] = {0};
+            command_data[0] = 0x5a;
+            command_data[1] = 0xa5;
+            command_data[2] = 0x05;
+            command_data[3] = 0x82;
+            command_data[4] = 0x10;
+            command_data[5] = vp;
+            command_data[6] = 0x00;
+            command_data[7] = value;
+            ESP_LOGV(TAG, "Writing to UART %d", command_data);
+            this->write_array(command_data, 8);
+        }
+
+    
+        void Dwin::parse_data_()
+        {
+            this->status_clear_warning();
+        }
+
+        uint16_t Dwin::get_16_bit_uint_(uint8_t start_index) const
+        {
+            return (uint16_t(this->data_[start_index + 1]) << 8) | uint16_t(this->data_[start_index]);
+        }
+
+        void Dwin::dump_config()
+        {
+            ESP_LOGCONFIG(TAG, "DWIN:");
+        }
+
+        void Dwin::beepHMI()
+        {
+            uint8_t command_data[] = {CMD_HEAD1, CMD_HEAD2, 0x05, CMD_WRITE, 0x00, 0xA0, 0x00, 0x7D};
+            this->write_array(command_data, sizeof(command_data));
+        }
+
+        double Dwin::getHWVersion()
+        {
+            uint8_t command_data[] = {CMD_HEAD1, CMD_HEAD2, 0x04, CMD_READ, 0x00, 0x0F, 0x01};
+            this->write_array(command_data, sizeof(command_data));
+        }
+
+        void Dwin::setVP(unsigned short int address, byte data)
+        {
+            uint8_t command_data[] = {CMD_HEAD1, CMD_HEAD2, 0x05 , CMD_WRITE, (address >> 8) & 0xFF, (address) & 0xFF, 0x00, data};
+            this->write_array(command_data, sizeof(command_data));
+        }
+
+        void Dwin::restartHMI()
+        {
+            uint8_t command_data[] = {CMD_HEAD1, CMD_HEAD2, 0x07, CMD_WRITE, 0x00, 0x04, 0x55, 0xaa, CMD_HEAD1, CMD_HEAD2};
+            this->write_array(command_data, sizeof(command_data));
+        }
+
+        void Dwin::setBrightness(byte brigtness)
+        {
+            uint8_t command_data[] = {CMD_HEAD1, CMD_HEAD2, 0x04, CMD_WRITE, 0x00, 0x82, brigtness};
+            this->write_array(command_data, sizeof(command_data));
+        }
+
+        byte Dwin::getBrightness()
+        {
+            uint8_t command_data[] = {CMD_HEAD1, CMD_HEAD2, 0x04, CMD_READ, 0x00, 0x31, 0x01};
+            this->write_array(command_data, sizeof(command_data));
+        }
+
+    } // namespace dwin
+} // namespace esphome

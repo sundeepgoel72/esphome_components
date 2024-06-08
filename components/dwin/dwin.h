@@ -1,85 +1,63 @@
+// Basing this on external_component uart and esphome component DWIN
+//-------------------------------------------------------------------
 #pragma once
 
 #include "esphome/core/component.h"
-#include "esphome/components/binary_sensor/binary_sensor.h"
-//#include "esphome/components/button/button.h"
-#include "esphome/components/output/binary_output.h"
-#include "esphome/components/output/float_output.h"
-#include "esphome/components/sensor/sensor.h"
-#include "esphome/components/switch/switch.h"
-#include "esphome/components/text_sensor/text_sensor.h"
 #include "esphome/components/uart/uart.h"
+#include "esphome/components/output/float_output.h"
 
-namespace esphome {
-namespace dwin {
+typedef bool boolean;
+typedef uint8_t byte;
 
-class DWIN : public Component,  public uart::UARTDevice {
- public:
- 
-  float get_setup_priority() const override { return setup_priority::LATE; }
-  void setup() override;
-  void loop() override;
-  //void dump_config() override;
+using std::string;
 
-  //From Arduino DWIN_DGUS_HMI library --------------------------------------------------------
- 		
-  void echoEnabled(bool enabled);
-  // Listen Touch Events & Messeges from HMI
-  void listen();
-  // Get Version
-  double getHWVersion();
-  // restart HMI
-  void restartHMI();
-  // set Perticulat Page
-  void setPage(byte pageID);
-  // get Current Page ID
-  byte getPage();
-  // set LCD Brightness
-  void setBrightness(byte pConstrast);
-  // set LCD Brightness
-  byte getBrightness();
-  // set Data on VP Address
-  void setText(long address, String textData);
-  // set Byte on VP Address
-  void setVP(long address, byte data);
-  // beep Buzzer for 1 sec
-  void beepHMI();
-  // Callback Function
-  typedef void (*hmiListner) (String address, int lastByte, String messege, String response);
+namespace esphome
+{
+    namespace dwin
+    {
 
-  // CallBack Method
-  void hmiCallBack(hmiListner callBackFunction);
-  //End From Arduino DWIN_DGUS_HMI library --------------------------------------------------------
+        class Dwin : public Component, public uart::UARTDevice
+        {
+        public:
+            void setup() override;
+            void loop() override;
+            void dump_config() override;
+            void beepHMI();
+            void write_vp_command_();
+            double getHWVersion();
+            void restartHMI();
+            void write_vp_command_(uint8_t vp, uint8_t value);
+            void setPage(byte pageID);
+            byte getPage();
+            void setBrightness(byte pConstrast);
+            byte getBrightness();
+            void readDWIN();
+            void setVP(unsigned short int address, byte data);
+            //void setText(long address, String textData);
 
- protected:
-	
+        protected:
+            void write_command_(const uint8_t *command);
+            void parse_data_();
+            uint16_t get_16_bit_uint_(uint8_t start_index) const;
+            void handle_char_(uint8_t c);
+            std::vector<uint8_t> rx_message_;
 
- private:
+        private:
+            uint8_t data_[10];
+            uint8_t data_index_{0};
+            uint32_t last_transmission_{0};
+        };
 
-    //From Arduino DWIN_DGUS_HMI library --------------------------------------------------------
-    #ifndef ESP32
-    SoftwareSerial* localSWserial = nullptr; 
-    #endif
+        // class DwinFOutput  : public Component, public output::FloatOutput {
+        // public:
+        //     DwinFOutput(uint8_t vp);
+        //     void dump_config() override;
+        //     void set_parent(Dwin *parent) { this->parent_ = parent; }
+        // protected:
+        //     void write_state(float state) override;
+        //     Dwin *parent_;
+        //     uint8_t vp;
+        // };
 
-    Stream* _dwinSerial;   // DWIN Serial interface
-    bool _isSoft;          // Is serial interface software
-    long _baud;              // DWIN HMI Baud rate
-    bool _echo;            // Response Command Show
-    bool _isConnected;     // Flag set on successful communication
-
-    bool cbfunc_valid;
-    hmiListner listnerCallback;
-
-    void init(Stream* port, bool isSoft); 
-    byte readCMDLastByte();
-    String readDWIN();
-    String handle();
-    String checkHex(byte currentNo);
-    void flushSerial();
-
-    //End From Arduino DWIN_DGUS_HMI library --------------------------------------------------------
-
-};
-
-}  // namespace dwin
-}  // namespace esphome
+    } // namespace dwin
+} // namespace esphome
